@@ -4,8 +4,12 @@ import hmac
 import hashlib
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from .config import settings
-from .models import Base, Plan, Organization, Key
+try:
+    from .config import settings
+    from .models import Base, Plan, Organization, Key
+except (ImportError, ValueError):
+    from src.app.config import settings
+    from src.app.models import Base, Plan, Organization, Key
 
 
 def hmac_hash(secret: str, pepper: str) -> str:

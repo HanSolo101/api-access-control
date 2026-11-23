@@ -20,7 +20,7 @@ async def health():
     return {"status": "OK"}
 
 
-@router.post("/v1/quote")
+@router.api_route("/v1/quote", methods=["GET", "POST"])
 async def quote(
     response: Response,
     idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
