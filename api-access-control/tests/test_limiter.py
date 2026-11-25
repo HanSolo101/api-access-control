@@ -33,7 +33,7 @@ def get_current_utc_month_info():
 
 def test_key_format():
     key = generate_key_string()
-    parts = key.split("_")
+    parts = key.split("_", 2)
     assert len(parts) == 3, f"Expected 3 parts, got {len(parts)}"
     assert parts[0] == "qk", f"Expected prefix 'qk', got {parts[0]}"
     assert len(parts[1]) == 8, f"Expected 8 chars for id, got {len(parts[1])}"
