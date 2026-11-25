@@ -25,13 +25,13 @@ def verify_admin_token(x_admin_token: Optional[str] = Header(None, alias="X-Admi
 
 
 class CreateOrgRequest(BaseModel):
-    name: str = Field(..., min_length=1)
-    plan_id: int
+    name: str = Field(..., min_length=1, examples=["My Organization"])
+    plan_id: int = Field(..., ge=1, examples=[1])
 
 
 class CreateKeyRequest(BaseModel):
-    org_id: int
-    label: str = Field(..., min_length=1)
+    org_id: int = Field(..., ge=1, examples=[1])
+    label: str = Field(..., min_length=1, examples=["Production Key"])
 
 
 class RotateKeyRequest(BaseModel):
@@ -39,7 +39,7 @@ class RotateKeyRequest(BaseModel):
 
 
 class ChangePlanRequest(BaseModel):
-    plan_id: int
+    plan_id: int = Field(..., ge=1, examples=[2])
 
 
 def generate_key_string() -> str:
@@ -47,6 +47,37 @@ def generate_key_string() -> str:
     key_id = secrets.token_hex(4)  # 8 hex chars
     key_secret = secrets.token_urlsafe(32)[:43]  # 43 chars
     return f"qk_{key_id}_{key_secret}"
+
+
+@admin_router.get("/plans", dependencies=[Depends(verify_admin_token)])
+async def list_plans(db: Session = Depends(get_db)):
+    """List all available plans and their limits."""
+    plans = db.query(Plan).order_by(Plan.id.asc()).all()
+    return [
+        {
+            "id": p.id,
+            "name": p.name,
+            "burst": p.burst,
+            "refill_per_sec": float(p.refill_per_sec),
+            "monthly_allowance": p.monthly_allowance,
+        }
+        for p in plans
+    ]
+
+
+@admin_router.get("/orgs", dependencies=[Depends(verify_admin_token)])
+async def list_organizations(db: Session = Depends(get_db)):
+    """List all organizations and their assigned plans."""
+    orgs = db.query(Organization).order_by(Organization.id.asc()).all()
+    return [
+        {
+            "id": o.id,
+            "name": o.name,
+            "plan_id": o.plan_id,
+            "plan_name": o.plan.name if o.plan else None,
+        }
+        for o in orgs
+    ]
 
 
 @admin_router.post("/orgs", dependencies=[Depends(verify_admin_token)])
